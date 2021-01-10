@@ -1,0 +1,12 @@
+.env/
+fhs.py
+network.py
+websocketd.py
+builders.js
+rpc.js
+html/admin/content
+html/beamer/content
+html/main/content
+lessen/
+users/
+__pycache__/
