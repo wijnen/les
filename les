@@ -17,8 +17,11 @@ import websocketd
 from markdown import markdown
 fhs.option('data', 'data directory', default = '.')
 fhs.option('port', 'user port', default = '8010')
+fhs.option('proxy', 'admin proxy address', default = 'les-beamer')
 fhs.option('admin-port', 'admin port', default = '8011')
+fhs.option('admin-proxy', 'admin proxy address', default = 'les-admin')
 fhs.option('beamer-port', 'beamer port', default = '8012')
+fhs.option('beamer-proxy', 'beamer proxy address', default = 'les-beamer')
 fhs.option('loglimit', 'highest log level to output', default = 1)
 fhs.option('content', 'replacement string for FILE://', default = 'content')
 fhs.option('lazysave', 'save only when user quits', argtype = bool)
@@ -522,10 +525,10 @@ class Connection: # {{{
 # }}}
 
 # Main program {{{
-server = websocketd.RPChttpd(config['port'], Connection, httpdirs = [os.path.join('html', 'main')], tls = False, proxy = 'les')
-adminserver = websocketd.RPChttpd(config['admin-port'], Admin_Connection, httpdirs = [os.path.join('html', 'admin')], tls = False, proxy = 'les-admin')
+server = websocketd.RPChttpd(config['port'], Connection, httpdirs = [os.path.join('html', 'main')], tls = False, proxy = config['proxy'])
+adminserver = websocketd.RPChttpd(config['admin-port'], Admin_Connection, httpdirs = [os.path.join('html', 'admin')], tls = False, proxy = config['admin-proxy'])
 # The beamer is the same in terms of handling, but it uses different html.
-beamerserver = websocketd.RPChttpd(config['beamer-port'], Beamer_Connection, httpdirs = [os.path.join('html', 'beamer')], tls = False, proxy = 'les-beamer')
+beamerserver = websocketd.RPChttpd(config['beamer-port'], Beamer_Connection, httpdirs = [os.path.join('html', 'beamer')], tls = False, proxy = config['beamer-proxy'])
 groups = user.list_groups()
 group = None
 set_group(0)
