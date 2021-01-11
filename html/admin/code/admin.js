@@ -244,7 +244,7 @@ function new_group() {
 		alert("Please enter the new group's name");
 		return;
 	}
-	server.call('new_group', name);
+	server.call('new_group', [name]);
 }
 
 function new_student() {
@@ -253,7 +253,7 @@ function new_student() {
 		alert("Please enter the new student's name");
 		return;
 	}
-	server.call('new_student', name);
+	server.call('new_student', [name]);
 }
 
 function new_question() {

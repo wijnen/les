@@ -63,17 +63,16 @@ def user_has_pw(the_user):
 def set_group(idx): # {{{
 	global group, all_users, have_pw, seen, responses, cookies
 	assert 0 <= idx < len(groups)
-	if group == groups[idx]:
-		return
-	for (u, g) in tuple(user.users):
-		if g == 'admin':
-			continue
-		debug(3, 'Closing connection for ' + user.users[(u, g)]['name'])
-		try:
-			user.users[(u, g)]['connection'].remote.closed.event()
-		except:
-			pass
-		user.users[(u, g)]['connection'].remote.close()
+	if group != groups[idx]:
+		for (u, g) in tuple(user.users):
+			if g == 'admin':
+				continue
+			debug(3, 'Closing connection for ' + user.users[(u, g)]['name'])
+			try:
+				user.users[(u, g)]['connection'].remote.closed.event()
+			except:
+				pass
+			user.users[(u, g)]['connection'].remote.close()
 	group = groups[idx]
 	all_users = user.list_group(group)
 	have_pw = [user_has_pw(u) for u in all_users]
@@ -383,6 +382,7 @@ class Admin_Connection: # {{{
 		adminserver.broadcast.current(current)
 	# }}}
 	def group(self, idx): # {{{
+		current = 0
 		set_group(idx)
 	# }}}
 	def reset_password(self, idx): # {{{
@@ -398,11 +398,20 @@ class Admin_Connection: # {{{
 		user.save(u)
 	# }}}
 	def new_group(self, name):
-		pass	# TODO
+		global groups
+		assert name not in groups
+		user.new_group(name.lower())
+		groups = user.list_groups()
+		update_responses()
 	def new_student(self, name):
-		pass	# TODO
+		assert name not in all_users
+		user.new_user(group, name)
+		set_group(groups.index(group))
+		update_responses()
 	def new_question(self):
-		pass	# TODO
+		program.append({'cmd': 'title', 'case': False, 'arg': '', 'indent': None, 'lineno': -1, 'option': []})
+		adminserver.broadcast.program(programs, current_program, [{k: v for k, v in p.items() if k not in ('filter', 'score')} for p in program])
+		update_responses()
 	def q_move_up(self, idx):
 		pass	# TODO
 	def q_move_down(self, idx):
@@ -532,7 +541,7 @@ beamerserver = websocketd.RPChttpd(config['beamer-port'], Beamer_Connection, htt
 groups = user.list_groups()
 group = None
 set_group(0)
-print('servers are running')
+print('servers are running. main: %s, admin: %s, beamer: %s' % (config['port'], config['admin-port'], config['beamer-port']))
 websocketd.fgloop()
 # }}}
 
