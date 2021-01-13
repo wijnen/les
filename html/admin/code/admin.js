@@ -88,9 +88,32 @@ function build_content() {
 					server.call('edit', [this.idx, this.box.value]);
 				}
 				else {
-					this.box = this.label.ClearAll().AddElement('textarea');
-					this.box.value = program[this.idx].markdown;
-					this.editing = true;
+					this.label.ClearAll();
+					this.type = this.label.AddElement('select');
+					var types = ['Title', 'Term', 'Terms', 'Word', 'Words', 'Choice', 'Choices'];
+					for (var o = 0; o < types.length; ++o) {
+						var option = this.type.AddElement('option');
+						option.value = types[o];
+					}
+					var clabel = this.label.AddElement('label');
+					this.casesensitive = this.clabel.AddElement('input');
+					this.casesensitive.type = 'checkbox';
+					this.clabel.AddText('Case Sensitive');
+					this.box = this.label.AddElement('textarea');
+					this.update = function() {
+						var mc = this.type.options[this.type.selectedIndex].value[0] == 'C';
+						if (mc) {
+							this.box.style.display = 'none';
+							// TODO
+						}
+						else {
+							this.box.style.display = '';
+							this.box.value = program[this.idx].markdown;
+						}
+						this.editing = true;
+					};
+					this.type.AddEvent('change', this.update);
+					this.update();
 				}
 			});
 			button.idx = p;
