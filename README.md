@@ -18,6 +18,11 @@ be reachable as ../lesverhaal/.)
 Then follow the instructions for installing lesverhaal, including creating at
 least one admin.
 
+If you didn't install fhs.py, network.py and websocketd.py systemwide (but
+copied them into the lesverhaal directory), then they also need to be copied
+into the les directory. If you did install them system wide, they don't need to
+be (and shouldn't be) copied.
+
 Make a virtual environment for Python 3 named *.env*
 
 ```python3 -m venv .env```
