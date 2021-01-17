@@ -17,7 +17,7 @@ import websocketd
 from markdown import markdown
 fhs.option('data', 'data directory', default = '.')
 fhs.option('port', 'user port', default = '8010')
-fhs.option('proxy', 'admin proxy address', default = 'les-beamer')
+fhs.option('proxy', 'proxy address', default = 'les')
 fhs.option('admin-port', 'admin port', default = '8011')
 fhs.option('admin-proxy', 'admin proxy address', default = 'les-admin')
 fhs.option('beamer-port', 'beamer port', default = '8012')
