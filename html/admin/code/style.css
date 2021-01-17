@@ -80,3 +80,10 @@ input.tab#QSELECT:not(:checked) ~ div#QSELECT_tab {
 div.tab {
 	background: var(--tab);
 }
+
+.first .up, .last .down {
+	display: none;
+}
+.offline, .inactive {
+	background: red;
+}

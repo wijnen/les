@@ -397,29 +397,77 @@ class Admin_Connection: # {{{
 		user.refresh_admins()
 		user.save(u)
 	# }}}
-	def new_group(self, name):
+	def new_group(self, name): # {{{
 		global groups
 		assert name not in groups
 		user.new_group(name.lower())
 		groups = user.list_groups()
 		update_responses()
-	def new_student(self, name):
+	# }}}
+	def new_student(self, name): # {{{
 		assert name not in all_users
 		user.new_user(group, name)
 		set_group(groups.index(group))
 		update_responses()
-	def new_question(self):
-		program.append({'cmd': 'title', 'case': False, 'arg': '', 'indent': None, 'lineno': -1, 'option': []})
+	# }}}
+	def new_question(self): # {{{
+		program.append({'cmd': 'term', 'case': True, 'arg': '', 'indent': None, 'lineno': -1, 'option': [], 'markdown': '', 'title': ''})
 		adminserver.broadcast.program(programs, current_program, [{k: v for k, v in p.items() if k not in ('filter', 'score')} for p in program])
 		update_responses()
-	def q_move_up(self, idx):
-		pass	# TODO
-	def q_move_down(self, idx):
-		pass	# TODO
-	def q_remove(self, idx):
-		pass	# TODO
-	def q_edit(self, idx, markdown):
-		pass	# TODO
+	# }}}
+	def q_move_up(self, idx): # {{{
+		assert 0 < idx < len(program)
+		program.insert(idx - 1, program.pop(idx))
+		adminserver.broadcast.program(programs, current_program, [{k: v for k, v in p.items() if k not in ('filter', 'score')} for p in program])
+		update_responses()
+	# }}}
+	def q_move_down(self, idx): # {{{
+		assert 0 <= idx < len(program) - 1
+		program.insert(idx + 1, program.pop(idx))
+		adminserver.broadcast.program(programs, current_program, [{k: v for k, v in p.items() if k not in ('filter', 'score')} for p in program])
+		update_responses()
+	# }}}
+	def q_remove(self, idx): # {{{
+		assert 0 <= idx < len(program)
+		program.pop(idx)
+		adminserver.broadcast.program(programs, current_program, [{k: v for k, v in p.items() if k not in ('filter', 'score')} for p in program])
+		update_responses()
+	# }}}
+	def q_edit(self, idx, type, case, md, options): # {{{
+		program[idx] = {'cmd': type.lower(), 'case': case, 'arg': markdown(md), 'indent': None, 'lineno': -1, 'option': options, 'markdown': md, 'title': '\n'.join(options), 'filter': lambda x: x, 'score': lambda x: x}
+		self.save_chapter()
+		adminserver.broadcast.program(programs, current_program, [{k: v for k, v in p.items() if k not in ('filter', 'score')} for p in program])
+		update_responses()
+	# }}}
+	def copy_chapter(self, src, dst): # {{{
+		sname = os.path.join(config['programs'], src + os.extsep + 'txt')
+		dname = os.path.join(config['programs'], dst + os.extsep + 'txt')
+		assert sname in programs
+		assert dname not in programs
+		programs.append(dst)
+		current = programs[current_program]
+		programs.sort()
+		current = programs.index(current)
+		shutil.copy(sname, dname)
+	# }}}
+	def save_chapter(self): # {{{
+		filename = os.path.join(config['programs'], programs[current_program] + os.extsep + 'txt')
+		def parse(md):
+			lines = md.split('\n')
+			if len(lines) < 2:
+				return md
+			return ''.join('\n\t' + line for line in lines)
+		with open(filename, 'w') as f:
+			for p in program:
+				cmd = p['cmd']
+				if p['case']:
+					cmd = cmd.capitalize()
+				arg = parse(p['markdown'])
+				print(cmd + ':' + arg, file = f)
+				for o in p['option']:
+					print('option:' + parse(o), file = f)
+				# TODO: save filter and score
+	# }}}
 # }}}
 
 class Connection: # {{{
