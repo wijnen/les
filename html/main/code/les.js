@@ -126,8 +126,8 @@ var Connection = {
 		content.Add(response);
 	},
 	cookie: function(n, c) {
-		document.cookie = 'name=' + encodeURIComponent(n);
-		document.cookie = 'key=' + encodeURIComponent(c);
+		document.cookie = 'name=' + encodeURIComponent(n) + '; sameSite=Strict';
+		document.cookie = 'key=' + encodeURIComponent(c) + '; sameSite=Strict';
 	},
 };
 

@@ -356,8 +356,8 @@ var Connection = {
 		build_content();
 	},
 	cookie: function(n, c) {
-		document.cookie = 'name=' + encodeURIComponent(n) + '; sameSite=strict';
-		document.cookie = 'key=' + encodeURIComponent(c) + '; sameSite=strict';
+		document.cookie = 'name=' + encodeURIComponent(n) + '; sameSite=Strict';
+		document.cookie = 'key=' + encodeURIComponent(c) + '; sameSite=Strict';
 	},
 };
 
