@@ -38,6 +38,20 @@
 			<div class='tab' id='QSELECT_tab'>
 				<h1>Select Question</h1>
 				<table id='questions'></table>
+				<div id='qedit'>
+					<select id='qedit_type' onchange='qedit_update()'>
+						<option value='title'>Title</option>
+						<option value='term' selected='selected'>Term</option>
+						<option value='terms'>Terms</option>
+						<option value='word'>Word</option>
+						<option value='words'>Words</option>
+						<option value='choice'>Choice</option>
+						<option value='choices'>Choices</option>
+					</select>
+					<label><input type='checkbox' id='qedit_case'/>Case Sensitive</label>
+					<textarea id='qedit_question'></textarea>
+					<table id='qedit_options'></table>
+				</div>
 			</div>
 			<!-- Fixed content -->
 			<div id='fixed'>

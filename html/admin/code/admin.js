@@ -18,7 +18,7 @@ function button(label, click, items) {
 	return ret;
 }
 
-function EditableList(data, cbs) {
+function EditableList(data, cbs, element) {
 	// This is a class which provides an editable list.
 	// data is an array which contains the rows.
 	// data is updated when editing.
@@ -27,7 +27,8 @@ function EditableList(data, cbs) {
 	//	create is a callback to create one element in the list.
 	//	edit is a callback to start editing. If undefined, the button is not shown.
 	// The return value is an Element which should be inserted into the DOM.
-	var ret = Create('table');
+	var ret = element === undefined ? Create('table') : element.ClearAll();
+	ret.data = data;
 	ret.options = [];
 	var final_tr = ret.AddElement('tr');
 	var td = final_tr.AddElement('td');
@@ -55,17 +56,31 @@ function EditableList(data, cbs) {
 		tr.td.idx = idx;
 		cbs.create(tr.td, content);
 		tr.AddElement('td').Add(button('❌', function() {
-			cbs.remove(tr.td, idx, content);
+			if (cbs.remove !== undefined)
+				cbs.remove(tr.td, idx, content);
+			else
+				ret.remove(tr.td);
 		}));
 		tr.AddElement('td').Add(button('↑', function() {
-			cbs.up(tr.td, idx, content);
+			if (cbs.up !== undefined)
+				cbs.up(tr.td, idx, content);
+			else
+				ret.up(tr.td);
 		}, {'className': 'up'}));
 		tr.AddElement('td').Add(button('↓', function() {
-			cbs.down(tr.td, idx, content);
+			if (cbs.down !== undefined)
+				cbs.down(tr.td, idx, content);
+			else
+				ret.down(tr.td);
 		}, {'className': 'down'}));
-		if (cbs.edit != undefined) {
+		if (cbs.edit !== undefined) {
 			tr.AddElement('td').Add(button('✎', function() {
 				cbs.edit(tr.td, idx, content);
+			}));
+		}
+		if (cbs.save !== undefined) {
+			tr.AddElement('td').Add(button('💾', function() {
+				cbs.save(tr.td, idx, content);
 			}));
 		}
 	};
@@ -149,6 +164,12 @@ function EditableList(data, cbs) {
 	return ret;
 }
 
+function qedit_update() {
+	var select = document.getElementById('qedit_type');
+	var mc = select.options[select.selectedIndex].value[0] == 'c';
+	document.getElementById('qedit_options').style.display = mc ? '' : 'none';
+}
+
 function build_content() {
 	// Build group selection.
 	var list = document.getElementById('students');
@@ -210,68 +231,46 @@ function build_content() {
 				parent.body = parent.AddElement('span');
 				parent.body.innerHTML = data.arg;
 				parent.body.title = data.title;
-				parent.editing = false;
 			},
 			'edit': function(parent, idx, data) {
-				// Edit question.
-				if (parent.editing) {
-					server.call('q_edit', [idx, parent.typeselect.options[parent.typeselect.selectedIndex].value, parent.casesensitive.checked, parent.box.value, data.option]);
-				}
-				else {
-					parent.body.ClearAll();
-					parent.typeselect = parent.body.AddElement('select');
-					var types = ['Title', 'Term', 'Terms', 'Word', 'Words', 'Choice', 'Choices'];
-					for (var o = 0; o < types.length; ++o) {
-						var option = parent.typeselect.AddElement('option');
-						option.value = types[o];
-						option.AddText(types[o]);
-						if (data.cmd == types[o].toLowerCase())
-							option.selected = true;
+				// Copy question to edit box.
+				var select = document.getElementById('qedit_type');
+				for (var o = 0; o < select.options.length; ++o) {
+					var option = select.options[o];
+					if (option.value == data.cmd) {
+						option.selected = true;
+						break;
 					}
-					var clabel = parent.body.AddElement('label');
-					parent.casesensitive = clabel.AddElement('input');
-					parent.casesensitive.type = 'checkbox';
-					parent.casesensitive.checked = data['case'];
-					clabel.AddText('Case Sensitive');
-					parent.box = parent.body.AddElement('textarea');
-					parent.box.value = data.markdown;
-					if (data.option === undefined)
-						data.option = [];
-					parent.optlist = EditableList(data.option, {
-						'add': function(data) {
-							parent.optlist.add('');
-						},
-						'create': function(parent2, data) {
-							var input = parent2.AddElement('input');
-							input.type = 'text';
-							input.value = data;
-							input.AddEvent('change', function() {
-								parent.optlist.set(parent2, input.value);
-							});
-							input.focus();
-						},
-						'up': function(item, idx, data) {
-							parent.optlist.up(idx);
-						},
-						'down': function(item, idx, data) {
-							parent.optlist.down(idx);
-						},
-						'remove': function(item, idx, data) {
-							parent.optlist.remove(idx);
-						}
-					});
-					parent.Add(parent.optlist);
-					parent.update = function() {
-						var mc = parent.typeselect.options[parent.typeselect.selectedIndex].value[0] == 'C';
-						if (mc)
-							parent.optlist.style.display = '';
-						else
-							parent.optlist.style.display = 'none';
-						parent.editing = true;
-					};
-					parent.typeselect.AddEvent('change', parent.update);
-					parent.update();
 				}
+				document.getElementById('qedit_case').checked = data['case'];
+				var question = document.getElementById('qedit_question');
+				question.value = data.markdown;
+				if (data.option === undefined)
+					data.option = [];
+				var e = document.getElementById('qedit_options');
+				EditableList(data.option, {
+					'add': function(data) {
+						e.add('');
+					},
+					'create': function(parent2, data) {
+						var input = parent2.AddElement('input');
+						input.type = 'text';
+						input.value = data;
+						input.AddEvent('change', function() {
+							e.set(parent2, input.value);
+						});
+						input.focus();
+					}
+				}, e);
+				qedit_update();
+				question.focus();
+			},
+			'save': function(parent, idx, data) {
+				var select = document.getElementById('qedit_type');
+				var cs = document.getElementById('qedit_case');
+				var q = document.getElementById('qedit_question');
+				var options = document.getElementById('qedit_options');
+				server.call('q_edit', [idx, select.options[select.selectedIndex].value, cs.checked, q.value, options.data]);
 			}
 		}));
 	}
