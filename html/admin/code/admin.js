@@ -224,7 +224,7 @@ function build_content() {
 				input.checked = parent.idx == current;
 				input.AddEvent('click', function() {
 					event.preventDefault();
-					server.call('run', parent.idx);
+					server.call('run', [parent.idx]);
 				});
 				input.id = 'q' + parent.idx;
 				input.name = 'question';
