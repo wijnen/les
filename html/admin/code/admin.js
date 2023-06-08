@@ -1,4 +1,4 @@
-var server, error, login, content, groups, group, chapter, current_chapter, program, current, responses, blocked;
+var server, error, login, content, groups, group, chapter, current_chapter, program, current, responses, blocked, option_list;
 
 function reset_password(user) {
 	if (!confirm('Do you want to reset the password for ' + responses[user].name + '?'))
@@ -97,22 +97,24 @@ function EditableList(data, cbs, element) {
 	ret.remove = function(obj) {
 		// Remove item idx from the list. Also remove it from data.
 		var idx = obj.idx;
-		ret.removeChild(ret.options.splice(idx, 1));
+		ret.removeChild(ret.options.splice(idx, 1)[0]);
 		data.splice(idx, 1);
 		for (var i = idx; i < data.length; ++i) {
-			ret.options[i].idx = i;
+			ret.options[i].td.idx = i;
 			if (i & 1)
 				ret.options[i].AddClass('odd');
 			else
 				ret.options[i].RemoveClass('odd');
 		}
-		ret.options[0].AddClass('first');
-		ret.options[ret.options.length - 1].AddClass('last');
+		if (ret.options.length > 0) {
+			ret.options[0].AddClass('first');
+			ret.options[ret.options.length - 1].AddClass('last');
+		}
 	};
 	ret.up = function(obj) {
 		var idx = obj.idx;
 		console.assert(idx > 0);
-		var item = ret.options.splice(idx, 1);
+		var item = ret.options.splice(idx, 1)[0];
 		ret.removeChild(item);
 		ret.insertBefore(item, ret.options[idx - 1]);
 		data.splice(idx - 1, 0, data.splice(idx, 1));
@@ -245,23 +247,11 @@ function build_content() {
 				document.getElementById('qedit_case').checked = data['case'];
 				var question = document.getElementById('qedit_question');
 				question.value = data.markdown;
-				if (data.option === undefined)
-					data.option = [];
-				var e = document.getElementById('qedit_options');
-				EditableList(data.option, {
-					'add': function(data) {
-						e.add('');
-					},
-					'create': function(parent2, data) {
-						var input = parent2.AddElement('input');
-						input.type = 'text';
-						input.value = data;
-						input.AddEvent('change', function() {
-							e.set(parent2, input.value);
-						});
-						input.focus();
-					}
-				}, e);
+				while (option_list.data.length > 0)
+					option_list.remove(option_list.data[0]);
+				for (var idx = 0; idx < data.option.length; ++idx) {
+					option_list.add(data.option[idx]);
+				}
 				qedit_update();
 				question.focus();
 			},
@@ -301,6 +291,9 @@ function build_content() {
 			use.type = 'checkbox';
 			use.checked = !responses[r].blocked;
 			use.idx = r;
+			use.AddEvent('change', function() {
+				server.call('block', [this.idx, !this.checked]);
+			});
 			tr.AddElement('td').AddText(responses[r].answer);
 		}
 	}
@@ -369,6 +362,23 @@ function init() {
 	error.style.display = 'block';
 	login.style.display = 'none';
 	content.style.display = 'none';
+	var e = document.getElementById('qedit_options');
+	if (e.data === undefined)
+		e.data = [];
+	option_list = EditableList(e.data, {
+		'add': function(data) {
+			e.add('');
+		},
+		'create': function(parent2, data) {
+			var input = parent2.AddElement('input');
+			input.type = 'text';
+			input.value = data;
+			input.AddEvent('change', function() {
+				e.set(parent2, input.value);
+			});
+			input.focus();
+		}
+	}, e);
 	server = Rpc(Connection, null, connection_lost);
 }
 window.AddEvent('load', init);

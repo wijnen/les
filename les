@@ -231,6 +231,8 @@ def refresh_beamer(): # {{{
 	opts = []
 	for i, u in enumerate(all_users):
 		a = responses[i]
+		if a['blocked']:
+			continue
 		if a['answer'] is not None:
 			if program[current]['cmd'] not in ('choices', 'words', 'terms'):
 				a = [a['answer']]
@@ -295,9 +297,9 @@ class Admin_Connection: # {{{
 			debug(3, 'Replacing connection for ' + name)
 			try:
 				new_user['connection'].remote.replaced.event()
+				new_user['connection'].remote.close()
 			except:
 				pass
-			new_user['connection'].remote.close()
 		else:
 			user.users[(name.lower(), 'admin')] = new_user
 		new_user['connection'] = self
@@ -348,8 +350,6 @@ class Admin_Connection: # {{{
 	# }}}
 	def block(self, user, value): # {{{
 		assert self.user is not None
-		if isinstance(option, list):
-			option = ','.join(option)
 		responses[user]['blocked'] = value
 		update_responses()
 	# }}}
@@ -521,9 +521,9 @@ class Connection: # {{{
 			debug(2, 'Replacing connection for ' + name)
 			try:
 				u['connection'].remote.replaced.event()
+				u['connection'].remote.close()
 			except:
 				pass
-			u['connection'].remote.close()
 		else:
 			u['index'] = all_users.index(name.lower())
 			seen[u['index']] = True
@@ -590,7 +590,13 @@ groups = user.list_groups()
 group = None
 set_group(0)
 print('servers are running. main: %s, admin: %s, beamer: %s' % (config['port'], config['admin-port'], config['beamer-port']))
-websocketd.fgloop()
+while True:
+	try:
+		websocketd.fgloop()
+	except KeyboardInterrupt:
+		break
+	except:
+		traceback.print_exc()
 # }}}
 
 # vim: set foldmethod=marker :

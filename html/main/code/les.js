@@ -2,8 +2,8 @@ var server, error, login, group, content, response, myname;
 
 var Connection = {
 	replaced: function() {
+		rpc.close();
 		alert('De verbinding is overgenomen door een nieuwe login');
-		init();
 	},
 	login: function() {
 		//console.info('login');
@@ -22,6 +22,7 @@ var Connection = {
 		document.getElementsByTagName('body')[0].style.background = (my_response === null ? '' : 'lightblue');
 		response.ClearAll();
 		if (my_response !== null) {
+			response.AddText('Jouw antwoord: ');
 			if (data.cmd == 'choice')
 				response.AddText(data.option[my_response]);
 			else if (data.cmd == 'choices') {
@@ -34,11 +35,11 @@ var Connection = {
 				response.AddText(my_response);
 		}
 		var response_cb;
-		var div = content.ClearAll().AddElement('div');
-		div.innerHTML = data.arg;
+		var form = content.ClearAll().AddElement('form');
+		form.innerHTML = data.arg;
 		var rich = false;
 		if (data.cmd == 'choice') {
-			var ul = div.AddElement('ul');
+			var ul = form.AddElement('ul');
 			var opts = [];
 			for (var i = 0; i < data.option.length; ++i) {
 				var l = ul.AddElement('li').AddElement('label');
@@ -57,7 +58,7 @@ var Connection = {
 			};
 		}
 		else if (data.cmd == 'choices') {
-			var ul = div.AddElement('ul');
+			var ul = form.AddElement('ul');
 			var opts = [];
 			for (var i = 0; i < data.option.length; ++i) {
 				var l = ul.AddElement('li').AddElement('label');
@@ -77,7 +78,7 @@ var Connection = {
 		}
 		else {
 			rich = true;
-			var div2 = content.AddElement('div');
+			var div2 = form.AddElement('div2');
 			var e;
 			if (data.cmd == 'term') {
 				div2.AddText('Je antwoord: ');
@@ -113,14 +114,15 @@ var Connection = {
 			}
 		}
 		if (data.cmd != 'title') {
-			var button = content.AddElement('div').AddElement('button');
-			button.type = 'button';
-			button.AddText('Versturen');
-			button.AddEvent('click', function() {
-				var r = response_cb();
-				server.call('respond', [tag, r]);
-			});
+			var button = form.AddElement('div').AddElement('input');
+			button.type = 'submit';
+			button.value = 'Versturen';
 		}
+		form.AddEvent('submit', function(event) {
+			var r = response_cb();
+			server.call('respond', [tag, r]);
+			event.preventDefault();
+		});
 		if (rich)
 			richinput(content);
 		content.Add(response);
@@ -146,6 +148,8 @@ function init() {
 window.AddEvent('load', init);
 
 function connection_lost() {
+	alert('De verbinding is verbroken');
+	return;
 	try {
 		error.style.display = 'block';
 		login.style.display = 'none';

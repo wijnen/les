@@ -1,1 +1,1 @@
-../../../../lesverhaal/html/code/richinput.js
+../../../../supernovel/html/code/richinput.js
