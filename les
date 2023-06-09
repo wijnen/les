@@ -72,7 +72,7 @@ def set_group(idx): # {{{
 				user.users[(u, g)]['connection'].remote.closed.event()
 			except:
 				pass
-			user.users[(u, g)]['connection'].remote.close()
+			user.users[(u, g)]['connection'].remote._websocket_close()
 	group = groups[idx]
 	all_users = user.list_group(group)
 	have_pw = [user_has_pw(u) for u in all_users]
@@ -258,7 +258,7 @@ show_answers = False
 class Admin_Connection: # {{{
 	def __init__(self, remote): # {{{
 		self.remote = remote
-		remote.closed = self._closed
+		remote._websocket_closed = self._closed
 		self.user = None
 		if 'cookie' in self.remote.data['headers']:
 			c = self.remote.data['headers']['cookie']
@@ -297,7 +297,7 @@ class Admin_Connection: # {{{
 			debug(3, 'Replacing connection for ' + name)
 			try:
 				new_user['connection'].remote.replaced.event()
-				new_user['connection'].remote.close()
+				new_user['connection'].remote._websocket_close()
 			except:
 				pass
 		else:
@@ -313,7 +313,7 @@ class Admin_Connection: # {{{
 		return True
 	# }}}
 	def _closed(self): # {{{
-		self.remote.close()
+		self.remote._websocket_close()
 		if self.user is None:
 			debug(2, 'admin connection to {}:{} lost before logging in'.format(*self.remote.socket.remote))
 			return
@@ -474,7 +474,7 @@ class Connection: # {{{
 	def __init__(self, remote): # {{{
 		debug(2, 'New connection from {}:{}'.format(*remote.socket.remote))
 		self.remote = remote
-		remote.closed = self._closed
+		remote._websocket_closed = self._closed
 		self.remote.group.event(group)
 		self.response = None
 		if 'cookie' in self.remote.data['headers']:
@@ -521,7 +521,7 @@ class Connection: # {{{
 			debug(2, 'Replacing connection for ' + name)
 			try:
 				u['connection'].remote.replaced.event()
-				u['connection'].remote.close()
+				u['connection'].remote._websocket_close()
 			except:
 				pass
 		else:
@@ -539,7 +539,7 @@ class Connection: # {{{
 		return u
 	# }}}
 	def _closed(self): # {{{
-		self.remote.close()
+		self.remote._websocket_close()
 		if not hasattr(self, 'user'):
 			debug(2, 'connection to {}:{} lost before logging in'.format(*self.remote.socket.remote))
 			return
